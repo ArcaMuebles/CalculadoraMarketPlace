@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calculadora de Ganancia Marketplace</title>
+  <style>
+    :root{
+      --bg:#0f172a;
+      --card:#111827;
+      --muted:#94a3b8;
+      --accent:#22c55e;
+      --accent-2:#38bdf8;
+      --danger:#ef4444;
+      --border:#1f2937;
+      --text:#e5e7eb;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(140deg,#0b1224,#0f172a 50%,#0b1224);color:var(--text);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+    .wrap{max-width:1100px;margin:32px auto;padding:24px}
+    .title{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+    .title h1{font-size:clamp(20px,3vw,30px);margin:0}
+    .card{background:rgba(17,24,39,.75);backdrop-filter: blur(6px);border:1px solid var(--border);border-radius:18px;padding:18px}
+    .section h2{font-size:18px;margin:0 0 10px 0;color:#f8fafc}
+    .row{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:10px;align-items:center;margin:10px 0}
+    .row label{font-size:14px;color:var(--muted)}
+    input,select{width:100%;background:#0b1224;color:var(--text);border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-size:14px;outline:none}
+    input:focus,select:focus{border-color:#334155;box-shadow:0 0 0 2px rgba(56,189,248,.15)}
+    .help{font-size:12px;color:var(--muted)}
+    .kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    @media(max-width:720px){.kpi{grid-template-columns:1fr}}
+    .kpi .tile{background:#0b1224;border:1px solid var(--border);border-radius:14px;padding:14px}
+    .kpi .tile h3{margin:0 0 8px 0;color:#cbd5e1;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+    .kpi .tile .v{font-size:22px;font-variant-numeric:tabular-nums}
+    .hr{height:1px;background:linear-gradient(90deg,transparent,#1f2937,transparent);margin:12px 0}
+    .mono{font-variant-numeric:tabular-nums;font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    .footer{margin-top:18px;font-size:12px;color:var(--muted)}
+    .btn{background:var(--accent-2);border:0;color:#002133;font-weight:700;padding:10px 14px;border-radius:12px;cursor:pointer;margin:4px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="title">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 7a2 2 0 0 1 2-2h6m10 12a2 2 0 0 1-2 2h-6M9 5v14m6-14v14" stroke="#38bdf8" stroke-width="1.7" stroke-linecap="round"/></svg>
+      <h1>Calculadora de Ganancia Marketplace</h1>
+      <span class="pill">Modo: IVA 19% Chile</span>
+    </div>
+
+    <div class="card section">
+      <h2>Entradas</h2>
+      <div class="row"><label>Precio unitario de venta (con IVA)</label><input id="pv" type="number" step="1" value="239960"/><div class="help">Precio por unidad (con IVA)</div></div>
+      <div class="row"><label>Unidades</label><input id="units" type="number" step="1" value="4"/><div class="help">Ej.: 4 sillas</div></div>
+      <div class="row"><label>% Comisión marketplace</label><input id="feePct" type="number" step="0.1" value="18"/><div class="help">Ej.: 18% Falabella</div></div>
+      <div class="row"><label>Aplicación costos f.plus/cofin</label><select id="aplicaPor"><option value="pedido" selected>Por pedido (una vez)</option><option value="unidad">Por unidad (× Unidades)</option></select><div class="help">Cómo aplicar cofin y f.plus</div></div>
+      <div class="row"><label>Cofinanciamiento logístico (con IVA)</label><input id="cofin" type="number" step="1" value="18590"/><div class="help">Cargo positivo</div></div>
+      <div class="row"><label>Beneficio f.plus / descuento (con IVA)</label><input id="fplus" type="number" step="1" value="9300"/><div class="help">Monto f.plus</div></div>
+      <div class="row"><label>Tipo de f.plus</label>
+        <select id="fplusTipo">
+          <option value="descuento" selected>Descuento (se resta)</option>
+          <option value="cargo">Cargo (se suma)</option>
+        </select>
+      </div>
+      <div class="row"><label>Costo unitario</label><input id="costoUnit" type="number" step="1" value="34990"/><div class="help">Costo por unidad</div></div>
+      <div class="row"><label>Tipo de costo</label>
+        <select id="costoTipo">
+          <option value="conIVA" selected>Con IVA (compra con crédito fiscal)</option>
+          <option value="sinIVA">Sin IVA (fabricación / exento)</option>
+        </select>
+      </div>
+      <div class="row"><label>IVA %</label><input id="ivaPct" type="number" step="0.1" value="19"/><div class="help">Chile: 19%</div></div>
+      <button class="btn" id="btnReset">Restaurar ejemplo Falabella</button>
+      <button class="btn" id="btnClear">Limpiar todo</button>
+    </div>
+
+    <div class="card section">
+      <h2>Resultados</h2>
+      <div class="kpi">
+        <div class="tile"><h3>Depósito estimado (Falabella)</h3><div class="v mono" id="liquidezBruta">$0</div><div class="help">Venta – costos de venta</div></div>
+        <div class="tile"><h3>Caja inmediata</h3><div class="v mono" id="cajaInmediata">$0</div><div class="help">Liquidez – costo producto</div></div>
+        <div class="tile"><h3>Caja final (ajustada IVA)</h3><div class="v mono" id="cajaFinal">$0</div><div class="help">Caja inmediata – IVA a pagar</div></div>
+      </div>
+
+      <div class="hr"></div>
+      <h2>Desglose de costos de venta</h2>
+      <div class="row"><label>Comisión $</label><div class="mono" id="comisionMonto">$0</div><div class="help">precio total × %</div></div>
+      <div class="row"><label>Cofinanciamiento logístico</label><div class="mono" id="cofinMonto">$0</div><div class="help">con IVA</div></div>
+      <div class="row"><label>f.plus</label><div class="mono" id="fplusMonto">$0</div><div class="help">positivo o negativo según selección</div></div>
+      <div class="row"><label>Total costos de venta</label><div class="mono" id="costosVentaTot">$0</div><div class="help">con IVA</div></div>
+
+      <div class="hr"></div>
+      <h2>IVA y base neta</h2>
+      <div class="row"><label>Venta neta (sin IVA)</label><div class="mono" id="ventaNeta">$0</div><div class="help">Precio total / (1+IVA)</div></div>
+      <div class="row"><label>Costos venta netos</label><div class="mono" id="costosVentaNetos">$0</div><div class="help">Costos de venta / (1+IVA)</div></div>
+      <div class="row"><label>Costo producto neto</label><div class="mono" id="costoProdNeto">$0</div><div class="help">según tipo de costo</div></div>
+      <div class="row"><label>IVA débito (19%)</label><div class="mono" id="ivaDebito">$0</div><div class="help">IVA sobre la venta</div></div>
+      <div class="row"><label>IVA crédito</label><div class="mono" id="ivaCredito">$0</div><div class="help">IVA de compras + costos</div></div>
+      <div class="row"><label>IVA a pagar</label><div class="mono" id="ivaPagar">$0</div><div class="help">débito – crédito</div></div>
+
+      <div class="hr"></div>
+      <h2>Utilidades</h2>
+      <div class="row"><label>Utilidad neta (sin IVA)</label><div class="mono" id="utilidadNeta">$0</div><div class="help">venta neta – costos netos – costo neto</div></div>
+      <div class="row"><label>Margen sobre venta neta</label><div class="mono" id="margen">0%</div><div class="help">utilidad / venta neta</div></div>
+      <div class="row"><label>Utilidad por unidad</label><div class="mono" id="utilidadUnidad">$0</div><div class="help">utilidad / unidades</div></div>
+    </div>
+
+    <p class="footer">Consejo: ingresa valores <strong>con IVA</strong> en entradas (excepto cuando selecciones "sin IVA").</p>
+  </div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const fmt = n => new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(isFinite(n)?Math.round(n):0);
+
+  const idsIn = ['pv','units','feePct','cofin','fplus','costoUnit','ivaPct'];
+  idsIn.forEach(id=>$(id).addEventListener('input',calc));
+  ['fplusTipo','costoTipo','aplicaPor'].forEach(id=>$(id).addEventListener('change',calc));
+
+  $('btnReset').addEventListener('click',()=>{ $('pv').value=239960; $('units').value=4; $('feePct').value=18; $('cofin').value=18590; $('fplus').value=9300; $('fplusTipo').value='descuento'; $('costoUnit').value=34990; $('costoTipo').value='conIVA'; $('ivaPct').value=19; $('aplicaPor').value='pedido'; calc(); });
+  $('btnClear').addEventListener('click',()=>{ idsIn.forEach(id=>$(id).value=''); $('fplusTipo').value='descuento'; $('costoTipo').value='conIVA'; $('aplicaPor').value='pedido'; calc(); });
+
+  function calc(){
+    const pv = +$('pv').value || 0; // precio con IVA
+    const u  = +$('units').value || 0;
+    const feePct = (+$('feePct').value || 0) / 100;
+    const cofin = +$('cofin').value || 0; // con IVA
+    const fplusRaw = +$('fplus').value || 0;
+    const fplus = $('fplusTipo').value==='descuento' ? -Math.abs(fplusRaw) : Math.abs(fplusRaw);
+    const costoUnit = +$('costoUnit').value || 0;
+    const iva = (+$('ivaPct').value || 0) / 100;
+
+    // Precio total (con IVA) en función de unidades
+    const pvTotal = pv * u;
+
+    // Aplicación de cofin y f.plus (por pedido o por unidad)
+    const aplicaPor = $('aplicaPor').value;
+    const cofinAdj = aplicaPor==='unidad' ? cofin * u : cofin;
+    const fplusAdj = aplicaPor==='unidad' ? fplus * u : fplus;
+
+    // Costos de venta (con IVA)
+    const comision = pvTotal * feePct;
+    const costosVentaTot = comision + cofinAdj + fplusAdj;
+
+    // Liquidez con IVA (lo que Falabella deposita aprox.)
+    const liquidez = pvTotal - costosVentaTot;
+
+    // Costo producto
+    let costoProd = costoUnit * u;
+
+    // Caja inmediata
+    const cajaInmediata = liquidez - costoProd;
+
+    // Base neta
+    const ventaNeta = pvTotal / (1+iva);
+    const costosVentaNetos = costosVentaTot / (1+iva);
+    let costoProdNeto = costoProd / (1+iva);
+    if($('costoTipo').value==='sinIVA') costoProdNeto = costoProd;
+
+    const ivaDebito = pvTotal - ventaNeta; // IVA de la venta
+    const ivaCredito = (costosVentaTot - costosVentaNetos) + ($('costoTipo').value==='conIVA' ? (costoProd - costoProdNeto) : 0);
+    const ivaPagar = ivaDebito - ivaCredito;
+
+    // Utilidad (sin IVA)
+    const utilidadNeta = ventaNeta - costosVentaNetos - costoProdNeto;
+    const margen = ventaNeta>0 ? utilidadNeta/ventaNeta : 0;
+    const utilidadUnidad = u>0 ? utilidadNeta/u : 0;
+
+    // Caja final (ajustada por IVA a pagar)
+    const cajaFinal = cajaInmediata - ivaPagar;
+
+    // Pintar
+    $('liquidezBruta').textContent = fmt(liquidez);
+    $('cajaInmediata').textContent = fmt(cajaInmediata);
+    $('cajaFinal').textContent = fmt(cajaFinal);
+
+    $('comisionMonto').textContent = fmt(comision);
+    $('cofinMonto').textContent = fmt(cofinAdj);
+    $('fplusMonto').textContent = fmt(fplusAdj);
+    $('costosVentaTot').textContent = fmt(costosVentaTot);
+
+    $('ventaNeta').textContent = fmt(ventaNeta);
+    $('costosVentaNetos').textContent = fmt(costosVentaNetos);
+    $('costoProdNeto').textContent = fmt(costoProdNeto);
+    $('ivaDebito').textContent = fmt(ivaDebito);
+    $('ivaCredito').textContent = fmt(ivaCredito);
+    $('ivaPagar').textContent = fmt(ivaPagar);
+
+    $('utilidadNeta').textContent = fmt(utilidadNeta);
+    $('margen').textContent = (margen*100).toFixed(1)+'%';
+    $('utilidadUnidad').textContent = fmt(utilidadUnidad);
+
+    // Color señales
+    document.querySelectorAll('#cajaFinal,#utilidadUnidad').forEach(el=>{
+      const val = el.textContent.replace(/[^\d-]/g,'');
+      el.parentElement.parentElement.style.borderColor = (+val<0)?'var(--danger)':'var(--border)';
+    });
+  }
+
+  calc();
+})();
+</script>
+</body>
+</html>
